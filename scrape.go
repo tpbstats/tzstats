@@ -6,6 +6,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq"
 	"log"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -29,16 +30,25 @@ func scrape(db gorm.DB) {
 	}
 
 	// Get responses
+	transport := http.Transport{
+		Dial: func(network, url string) (net.Conn, error) {
+			return net.DialTimeout(network, url, 2*time.Second)
+		},
+	}
+	client := http.Client{
+		Transport: &transport,
+	}
 	var responses = make([]*http.Response, len(relatives))
 	for key, relative := range relatives {
 		for _, base := range bases {
 			url := fmt.Sprintf("%s%s", base, relative)
-			resp, err := http.Get(url)
-			if err != nil {
-				log.Println("Problem connecting")
+			resp, err := client.Get(url)
+			if err != nil || resp.StatusCode != 200 {
+				log.Printf("error: %s", url)
 				continue
 			}
 			responses[key] = resp
+			log.Printf("success: %s", url)
 			break
 		}
 	}
