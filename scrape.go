@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"net/http"
 	"github.com/PuerkitoBio/goquery"
-	"strconv"
-	"strings"
 	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq"
+	"log"
+	"net/http"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -23,10 +23,9 @@ func scrape(db gorm.DB) {
 	}
 
 	// Relative page urls
-	relatives := []string{
-		"search?f=movie&p=0",
-		// "search?f=movie&p=1",
-		// "search?f=movie&p=2",
+	relatives := make([]string, 10)
+	for i := 0; i < len(relatives); i++ {
+		relatives[i] = fmt.Sprintf("search?f=movie&p=%d", i)
 	}
 
 	// Get responses
@@ -46,8 +45,8 @@ func scrape(db gorm.DB) {
 
 	// Get statuses
 	scrape := Scrape{
-		Time: time.Now(),
-		Statuses: make([]Status, len(responses) * 50),
+		Time:     time.Now(),
+		Statuses: make([]Status, len(responses)*50),
 	}
 	for i, response := range responses {
 		document, err := goquery.NewDocumentFromResponse(response)
@@ -60,10 +59,10 @@ func scrape(db gorm.DB) {
 			href, _ := list.Find("dt a").Attr("href")
 			seeders := stringToInt(list.Find("dd span.u").Text())
 			leechers := stringToInt(list.Find("dd span.d").Text())
-			key := i * 50 + j
+			key := i*50 + j
 			status := Status{
-				Hash: href[1:],
-				Seeders: seeders,
+				Hash:     href[1:],
+				Seeders:  seeders,
 				Leechers: leechers,
 			}
 			scrape.Statuses[key] = status
