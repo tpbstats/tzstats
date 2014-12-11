@@ -7,16 +7,13 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"strconv"
 	"strings"
+	"github.com/jinzhu/gorm"
+	_ "github.com/lib/pq"
+	"time"
 )
 
-type status struct {
-	hash string
-	seeders int
-	leechers int
-}
+func scrape(db gorm.DB) {
 
-func main() {
-	
 	// Base urls
 	bases := []string{
 		"https://torrentz.eu/",
@@ -48,7 +45,10 @@ func main() {
 	}
 
 	// Get statuses
-	var statuses = make([]status, len(responses) * 50)
+	scrape := Scrape{
+		Time: time.Now(),
+		Statuses: make([]Status, len(responses) * 50),
+	}
 	for i, response := range responses {
 		document, err := goquery.NewDocumentFromResponse(response)
 		if err != nil {
@@ -61,18 +61,19 @@ func main() {
 			seeders := stringToInt(list.Find("dd span.u").Text())
 			leechers := stringToInt(list.Find("dd span.d").Text())
 			key := i * 50 + j
-			status := status{
-				href[1:],
-				seeders,
-				leechers,
+			status := Status{
+				Hash: href[1:],
+				Seeders: seeders,
+				Leechers: leechers,
 			}
-			statuses[key] = status
-			log.Printf("%d: %+v", key, status)
+			scrape.Statuses[key] = status
 		})
 	}
 
 	// Iterate through statusses to get torrents
-	
+
+	// Insert scrape
+	db.Create(&scrape)
 }
 
 func stringToInt(str string) int {
@@ -80,10 +81,3 @@ func stringToInt(str string) int {
 	number, _ := strconv.Atoi(str)
 	return number
 }
-
-
-// Statuses
-// Leechers, Seeders, Hash
-
-// Torrents
-// Names, 

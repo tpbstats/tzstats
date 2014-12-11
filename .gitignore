@@ -1,1 +1,8 @@
+# Build
 tzstats
+
+# Mac shit
+.DS_Store
+
+# Configuration
+*.sh
