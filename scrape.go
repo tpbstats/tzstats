@@ -17,10 +17,10 @@ func scrape(db gorm.DB) {
 
 	// Base urls
 	bases := []string{
-		"https://torrentz.eu/",
-		"https://torrentz.me/",
-		"https://torrentz.ch/",
-		"https://torrentz.in/",
+		"http://torrentz.eu/",
+		"http://torrentz.me/",
+		"http://torrentz.ch/",
+		"http://torrentz.in/",
 	}
 
 	// Relative page urls
