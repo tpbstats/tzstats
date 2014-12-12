@@ -6,7 +6,6 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq"
 	"log"
-	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -15,40 +14,30 @@ import (
 
 func scrape(db gorm.DB) {
 
-	// Base urls
-	bases := []string{
-		"http://torrentz.eu/",
-		"http://torrentz.me/",
-		"http://torrentz.ch/",
-		"http://torrentz.in/",
-	}
+	// Config
+	pages := 1
+	attempts := 3
 
-	// Relative page urls
-	relatives := make([]string, 10)
-	for i := 0; i < len(relatives); i++ {
-		relatives[i] = fmt.Sprintf("search?f=movie&p=%d", i)
+	// Get urls
+	urls := make([]string, pages)
+	base := "https://torrentz.eu/search?f=movie&p="
+	for i := 0; i < len(urls); i++ {
+		urls[i] = fmt.Sprintf("%s%d", base, i)
 	}
 
 	// Get responses
-	transport := http.Transport{
-		Dial: func(network, url string) (net.Conn, error) {
-			return net.DialTimeout(network, url, 2*time.Second)
-		},
-	}
+	var responses = make([]*http.Response, len(urls))
 	client := http.Client{
-		Transport: &transport,
+	    Timeout: time.Duration(2 * time.Second),
 	}
-	var responses = make([]*http.Response, len(relatives))
-	for key, relative := range relatives {
-		for _, base := range bases {
-			url := fmt.Sprintf("%s%s", base, relative)
+	for key, url := range urls {
+		for i := 0; i < attempts; i++ {
 			resp, err := client.Get(url)
 			if err != nil || resp.StatusCode != 200 {
 				log.Printf("error: %s", url)
 				continue
 			}
 			responses[key] = resp
-			log.Printf("success: %s", url)
 			break
 		}
 	}

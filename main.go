@@ -9,15 +9,16 @@ import (
 
 func main() {
 
-	// Set up DB
-	db, err := gorm.Open("postgres", os.Getenv("DATABASE"))
+	// Set up db
+	db, _ := gorm.Open("postgres", os.Getenv("DATABASE"))
+	db.DB()
+	err := db.DB().Ping()
 	if err != nil {
 		log.Panic(err)
 	}
-	db.DB()
 	db.SingularTable(true)
 
-	// Continue with designated action and pass along DB
+	// Continue with designated action and pass along db
 	var action string
 	flag.StringVar(&action, "action", "scrape", "action")
 	flag.Parse()
