@@ -6,3 +6,4 @@ tzstats
 
 # Configuration
 *.sh
+*.pl

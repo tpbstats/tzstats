@@ -16,7 +16,6 @@ func main() {
 	}
 	db.DB()
 	db.SingularTable(true)
-	// db.LogMode(true)
 
 	// Continue with designated action and pass along DB
 	var action string
