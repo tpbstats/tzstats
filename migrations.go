@@ -12,7 +12,9 @@ func migrations(db gorm.DB) {
 	fmt.Println("Are you sure?")
 	var answer string
 	fmt.Scanf("%s", &answer)
-	if answer != "yes" { return }
+	if answer != "yes" {
+		return
+	}
 
 	db.Exec("drop schema public cascade")
 	db.Exec("create schema public")

@@ -14,12 +14,8 @@ import (
 
 func scrape(db gorm.DB) {
 
-	// Config
-	pages := 1
-	attempts := 3
-
 	// Get urls
-	urls := make([]string, pages)
+	urls := make([]string, 1)
 	base := "https://torrentz.eu/search?f=movie&p="
 	for i := 0; i < len(urls); i++ {
 		urls[i] = fmt.Sprintf("%s%d", base, i)
@@ -27,19 +23,13 @@ func scrape(db gorm.DB) {
 
 	// Get responses
 	var responses = make([]*http.Response, len(urls))
-	client := http.Client{
-	    Timeout: time.Duration(2 * time.Second),
-	}
 	for key, url := range urls {
-		for i := 0; i < attempts; i++ {
-			resp, err := client.Get(url)
-			if err != nil || resp.StatusCode != 200 {
-				log.Printf("error: %s", url)
-				continue
-			}
-			responses[key] = resp
-			break
+		resp, err := get(url)
+		if err != nil || resp.StatusCode != 200 {
+			log.Printf("error: %s", url)
+			continue
 		}
+		responses[key] = resp
 	}
 
 	// Get statuses
@@ -67,8 +57,6 @@ func scrape(db gorm.DB) {
 			scrape.Statuses[key] = status
 		})
 	}
-
-	// Iterate through statusses to get torrents
 
 	// Insert scrape
 	db.Create(&scrape)
