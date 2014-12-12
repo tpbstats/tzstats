@@ -7,8 +7,6 @@ import (
 	_ "github.com/lib/pq"
 	"log"
 	"net/http"
-	"strconv"
-	"strings"
 	"time"
 )
 
@@ -60,10 +58,4 @@ func scrape(db gorm.DB) {
 
 	// Insert scrape
 	db.Create(&scrape)
-}
-
-func stringToInt(str string) int {
-	str = strings.Replace(str, ",", "", -1)
-	number, _ := strconv.Atoi(str)
-	return number
 }
