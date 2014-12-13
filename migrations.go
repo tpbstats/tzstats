@@ -2,12 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/jinzhu/gorm"
 )
 
-func migrations(db gorm.DB) {
-
-	db.LogMode(true)
+func migrations() {
 
 	fmt.Println("Are you sure?")
 	var answer string
@@ -16,7 +13,8 @@ func migrations(db gorm.DB) {
 		return
 	}
 
+	db.LogMode(true)
 	db.Exec("drop schema public cascade")
 	db.Exec("create schema public")
-	db.AutoMigrate(&Scrape{}, &Status{})
+	db.AutoMigrate(&Scrape{}, &Status{}, &Torrent{}, &Movie{}, &Category{})
 }

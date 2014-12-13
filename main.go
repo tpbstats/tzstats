@@ -7,10 +7,12 @@ import (
 	"os"
 )
 
+var db gorm.DB
+
 func main() {
 
-	// Set up db
-	db, _ := gorm.Open("postgres", os.Getenv("DATABASE"))
+	log.Println("Connecting to database")
+	db, _ = gorm.Open("postgres", os.Getenv("DATABASE"))
 	db.DB()
 	defer db.DB().Close()
 	err := db.DB().Ping()
@@ -18,16 +20,17 @@ func main() {
 		log.Panic(err)
 	}
 	db.SingularTable(true)
+	log.Println("Connection established")
 
-	// Continue with designated action and pass along db
+	// Continue with designated action
 	var action string
 	flag.StringVar(&action, "action", "scrape", "action")
 	flag.Parse()
 	switch action {
 	case "migrations":
-		migrations(db)
+		migrations()
 	case "scrape":
-		scrape(db)
+		scrape()
 	default:
 		panic("Invalid action")
 	}
