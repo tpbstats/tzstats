@@ -15,7 +15,7 @@ func scrape(db gorm.DB) {
 	log.Println("Commencing")
 
 	// Get urls
-	urls := make([]string, 1)
+	urls := make([]string, 10)
 	base := "https://torrentz.eu/search?f=movie&p="
 	for i := 0; i < len(urls); i++ {
 		urls[i] = fmt.Sprintf("%s%d", base, i)
@@ -36,30 +36,36 @@ func scrape(db gorm.DB) {
 
 	// Get statuses
 	log.Println("Statuses")
-	scrape := Scrape{
-		Time:     time.Now(),
-		Statuses: make([]Status, len(responses)*50),
-	}
-	for i, response := range responses {
+	statuses := make(map[string]Status)
+	for _, response := range responses {
 		document, err := goquery.NewDocumentFromResponse(response)
 		if err != nil {
 			log.Panicln(err)
 			continue
 		}
 		lists := document.Find(".results dl:not(:last-of-type)")
-		lists.Each(func(j int, list *goquery.Selection) {
-			href, _ := list.Find("dt a").Attr("href")
+		lists.Each(func(i int, list *goquery.Selection) {
+			hash, _ := list.Find("dt a").Attr("href")
+			hash = hash[1:]
 			seeders := stringToInt(list.Find("dd span.u").Text())
 			leechers := stringToInt(list.Find("dd span.d").Text())
-			key := i*50 + j
 			status := Status{
-				Hash:     href[1:],
+				Hash:     hash,
 				Seeders:  seeders,
 				Leechers: leechers,
 			}
-			scrape.Statuses[key] = status
+			statuses[hash] = status
 		})
 	}
+
+	// Assemble scrape
+	scrape := Scrape{
+		Time:     time.Now(),
+		Statuses: make([]Status, 0, len(statuses)),
+	}
+	for _, status := range statuses {
+        scrape.Statuses = append(scrape.Statuses, status)
+    }
 
 	// Insert scrape
 	db.LogMode(true)
