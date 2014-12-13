@@ -15,7 +15,7 @@ func scrape(db gorm.DB) {
 	log.Println("Commencing")
 
 	// Get urls
-	urls := make([]string, 1)
+	urls := make([]string, 10)
 	base := "https://torrentz.eu/search?f=movie&p="
 	for i := 0; i < len(urls); i++ {
 		urls[i] = fmt.Sprintf("%s%d", base, i)
