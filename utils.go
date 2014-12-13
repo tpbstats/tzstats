@@ -12,12 +12,12 @@ import (
 )
 
 var client http.Client = http.Client{
-	Timeout: time.Duration(2 * time.Second),
+	Timeout: time.Duration(1 * time.Second),
 }
 
-func getBody(url string) (string, error) {
+func getBody(url string, attempts int) (string, error) {
 	log.Printf("Getting %s", url)
-	for i := 0; i < 3; i++ {
+	for i := 0; i < attempts; i++ {
 		resp, err := client.Get(url)
 		if err != nil || resp.StatusCode != 200 {
 			continue
@@ -33,9 +33,9 @@ func getBody(url string) (string, error) {
 	return "", fmt.Errorf("Failure %s", url)
 }
 
-func getDocument(url string) (*goquery.Document, error) {
+func getDocument(url string, attempts int) (*goquery.Document, error) {
 	log.Printf("Getting %s", url)
-	for i := 0; i < 3; i++ {
+	for i := 0; i < attempts; i++ {
 		resp, err := client.Get(url)
 		if err != nil || resp.StatusCode != 200 {
 			continue

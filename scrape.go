@@ -27,7 +27,7 @@ func scrape() {
 
 	var documents = make([]*goquery.Document, len(urls))
 	for key, url := range urls {
-		document, err := getDocument(url)
+		document, err := getDocument(url, 3)
 		if err != nil {
 			log.Panicln(err)
 		}
@@ -83,7 +83,7 @@ func scrapeTorrent(hash string, cats []string) Torrent {
 	}
 
 	url := fmt.Sprintf("%s%s", base, torrent.Hash)
-	document, err := getDocument(url)
+	document, err := getDocument(url, 3)
 	if err != nil {
 		log.Println(err)
 		return torrent
@@ -109,7 +109,7 @@ func scrapeTorrent(hash string, cats []string) Torrent {
 func scrapeMovie(urls []string) Movie {
 	movie := Movie{}
 	for _, url := range urls {
-		body, err := getBody(url)
+		body, err := getBody(url, 1)
 		if err != nil {
 			continue
 		}
