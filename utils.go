@@ -20,7 +20,7 @@ func get(url string) (*http.Response, error) {
 		}
 		return resp, nil
 	}
-	return nil, fmt.Errorf("Failed to get %s", url)
+	return nil, fmt.Errorf("Failure %s", url)
 }
 
 func stringToInt(str string) int {

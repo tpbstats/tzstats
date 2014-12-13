@@ -12,6 +12,7 @@ func main() {
 	// Set up db
 	db, _ := gorm.Open("postgres", os.Getenv("DATABASE"))
 	db.DB()
+	defer db.DB().Close()
 	err := db.DB().Ping()
 	if err != nil {
 		log.Panic(err)

@@ -12,8 +12,10 @@ import (
 
 func scrape(db gorm.DB) {
 
+	log.Println("Commencing")
+
 	// Get urls
-	urls := make([]string, 10)
+	urls := make([]string, 1)
 	base := "https://torrentz.eu/search?f=movie&p="
 	for i := 0; i < len(urls); i++ {
 		urls[i] = fmt.Sprintf("%s%d", base, i)
@@ -22,15 +24,18 @@ func scrape(db gorm.DB) {
 	// Get responses
 	var responses = make([]*http.Response, len(urls))
 	for key, url := range urls {
+		log.Printf("Getting %s", url)
 		resp, err := get(url)
-		if err != nil || resp.StatusCode != 200 {
-			log.Printf("error: %s", url)
+		if err != nil {
+			log.Panicln(err)
 			continue
 		}
 		responses[key] = resp
+		log.Printf("Success %s", url)
 	}
 
 	// Get statuses
+	log.Println("Statuses")
 	scrape := Scrape{
 		Time:     time.Now(),
 		Statuses: make([]Status, len(responses)*50),
@@ -38,7 +43,7 @@ func scrape(db gorm.DB) {
 	for i, response := range responses {
 		document, err := goquery.NewDocumentFromResponse(response)
 		if err != nil {
-			log.Println("Failed to create document")
+			log.Panicln(err)
 			continue
 		}
 		lists := document.Find(".results dl:not(:last-of-type)")
@@ -57,5 +62,9 @@ func scrape(db gorm.DB) {
 	}
 
 	// Insert scrape
+	log.Println("Inserting")
 	db.Create(&scrape)
+	log.Printf("Inserted, id=%d", scrape.Id)
+
+	log.Println("Finished")
 }
