@@ -18,8 +18,6 @@ var rex map[string]*regexp.Regexp = map[string]*regexp.Regexp{
 
 func scrape() {
 
-	db.LogMode(true)
-
 	log.Println("Scrape commencing")
 
 	urls := make([]string, 10)
