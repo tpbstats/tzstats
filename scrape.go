@@ -22,7 +22,7 @@ func scrape() {
 
 	log.Println("Scrape commencing")
 
-	urls := make([]string, 1)
+	urls := make([]string, 10)
 	for i := 0; i < len(urls); i++ {
 		urls[i] = fmt.Sprintf("%sany?q=movies&p=%d", base, i)
 	}
@@ -44,12 +44,12 @@ func scrape() {
 	set := make(map[string]bool)
 	for _, document := range documents {
 		lists := document.Find(".results dl:not(:last-of-type)")
-		lists.EachWithBreak(func(i int, list *goquery.Selection) bool {
+		lists.Each(func(i int, list *goquery.Selection) {
 
 			href, _ := list.Find("dt a").Attr("href")
 			hash := href[1:]
 			if _, exists := set[hash]; exists {
-				return true
+				return
 			}
 			set[hash] = true
 
@@ -68,8 +68,6 @@ func scrape() {
 				ScrapeId:  scrape.Id,
 			}
 			db.Save(&status)
-
-			return false
 		})
 	}
 
@@ -81,7 +79,9 @@ func scrapeTorrent(hash string, cats []string) Torrent {
 	torrent := Torrent{Hash: hash}
 
 	for _, cat := range cats {
-		torrent.Categories = append(torrent.Categories, Category{Name: cat})
+		category := Category{Name: cat}
+		db.FirstOrCreate(&category, category)
+		torrent.Categories = append(torrent.Categories, category)
 	}
 
 	url := fmt.Sprintf("%s%s", base, torrent.Hash)
@@ -100,7 +100,8 @@ func scrapeTorrent(hash string, cats []string) Torrent {
 		}
 		urls = append(urls, href)
 	})
-	torrent.Movie = scrapeMovie(urls)
+	movie := scrapeMovie(urls)
+	torrent.MovieId = movie.Id
 
 	torrent.Rating, _ = strconv.Atoi(document.Find(".votebox .status").Text())
 
@@ -119,6 +120,7 @@ func scrapeMovie(urls []string) Movie {
 			continue
 		}
 		movie.Imdb = matches[1]
+		db.FirstOrCreate(&movie, movie)
 		break
 	}
 	return movie
