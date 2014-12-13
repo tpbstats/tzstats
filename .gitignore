@@ -7,3 +7,6 @@ tzstats
 # Configuration
 *.sh
 *.pl
+
+# Logging
+*.log
