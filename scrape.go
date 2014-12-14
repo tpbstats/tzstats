@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 var base string = "https://torrentz.eu/"
@@ -39,6 +40,7 @@ func scrape() {
 	db.Save(&scrape)
 
 	log.Println("Statuses")
+	c := make(chan bool)
 	set := make(map[string]bool)
 	for _, document := range documents {
 		lists := document.Find(".results dl:not(:last-of-type)")
@@ -51,22 +53,31 @@ func scrape() {
 			}
 			set[hash] = true
 
-			term := list.Find("dt")
-			cats := strings.Fields(rex["cats"].FindString(term.Text())[3:])
-			torrent := Torrent{Hash: hash}
-			if db.Find(&torrent, torrent).RecordNotFound() {
-				torrent = scrapeTorrent(hash, cats)
-				db.Save(&torrent)
-			}
+			go func() {
+				term := list.Find("dt")
+				cats := strings.Fields(rex["cats"].FindString(term.Text())[3:])
+				torrent := Torrent{Hash: hash}
+				if db.Find(&torrent, torrent).RecordNotFound() {
+					torrent = scrapeTorrent(hash, cats)
+					db.Save(&torrent)
+				}
 
-			status := Status{
-				Seeders:   stringToInt(list.Find("dd span.u").Text()),
-				Leechers:  stringToInt(list.Find("dd span.d").Text()),
-				TorrentId: torrent.Id,
-				ScrapeId:  scrape.Id,
-			}
-			db.Save(&status)
+				status := Status{
+					Seeders:   stringToInt(list.Find("dd span.u").Text()),
+					Leechers:  stringToInt(list.Find("dd span.d").Text()),
+					TorrentId: torrent.Id,
+					ScrapeId:  scrape.Id,
+				}
+				db.Save(&status)
+				c <- true
+			}()
 		})
+	}
+
+	log.Println("Working on it...")
+	for i := len(set); i > 0; i-- {
+		<-c
+		log.Printf("%d left ", i)
 	}
 
 	log.Printf("Scrape complete, id=%d", scrape.Id)
@@ -108,18 +119,34 @@ func scrapeTorrent(hash string, cats []string) Torrent {
 
 func scrapeMovie(urls []string) Movie {
 	movie := Movie{}
+	c := make(chan string)
 	for _, url := range urls {
-		body, err := getBody(url, 1)
-		if err != nil {
-			continue
-		}
-		matches := rex["imdb"].FindStringSubmatch(body)
-		if matches == nil || len(matches) < 2 {
-			continue
-		}
-		movie.Imdb = matches[1]
-		db.FirstOrCreate(&movie, movie)
-		break
+		url := url
+		go func() {
+			body, err := getBody(url, 1)
+			if err != nil {
+				return
+			}
+			select {
+			case <-c:
+				return
+			default:
+				matches := rex["imdb"].FindStringSubmatch(body)
+				if matches == nil || len(matches) < 2 {
+					return
+				}
+				c <- matches[1]
+			}
+		}()
 	}
-	return movie
+
+	select {
+	case movie.Imdb = <-c:
+		close(c)
+		db.FirstOrCreate(&movie, movie)
+		return movie
+	case <-time.After(10 * time.Second):
+		log.Println("Giving up on match...")
+		return movie
+	}
 }
